@@ -7,16 +7,17 @@ import {
     TextInput,
     TouchableOpacity,
     Text,
+    TouchableHighlight,
 } from 'react-native';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { GlobalContext } from '../context';
 import { getRequest } from '../useApihook';
 import SearchResults from './SearchResults';
 
-const SearchBar = ({ navigate }) => {
+const SearchBar = () => {
     const {
         username,
-        setUsername
+        setUsername,
     } = useContext(GlobalContext);
     const [searchData, setSearchData] = useState([]);
 
@@ -55,7 +56,7 @@ const SearchBar = ({ navigate }) => {
                 </TouchableOpacity>
             </KeyboardAvoidingView>
             {
-                searchData.length > 0 &&
+                searchData.length > 0 && typeof searchData[0] !== "string" &&
                 <View style={styles.searchResults}>
                     <View style={styles.modalInfo}>
                         <Text style={{
@@ -63,7 +64,7 @@ const SearchBar = ({ navigate }) => {
                         }}>
                             People you may know!
                         </Text>
-                        <TouchableOpacity
+                        <TouchableHighlight
                             onPress={() => setSearchData([])}
                             style={styles.closeButton}>
                             <Icon
@@ -72,11 +73,10 @@ const SearchBar = ({ navigate }) => {
                                 size={20}
                                 color="red"
                             />
-                        </TouchableOpacity>
+                        </TouchableHighlight>
 
                     </View>
                     <SearchResults
-                        navigate={navigate}
                         results={searchData}
                     />
                 </View>

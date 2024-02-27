@@ -13,46 +13,61 @@ import {
 } from 'react-native';
 import { GlobalContext } from '../context';
 
-const dummyChats = [
-  {
-    name: "Abhishek", id: 1, messages: [
-      { id: 1, msg: "Hello", type: "recieved" },
-      { id: 3, msg: "Vadiya", type: "sent" },
-      { id: 2, msg: "Kida", type: "sent" },
-      { id: 4, msg: "Mai b vadiya", type: "recieved" }
-    ]
-  },
-  {
-    name: "Anku", id: 2, messages: [
-      { id: 1, msg: "Hello", type: "recieved" },
-      { id: 3, msg: "Vadiya", type: "sent" },
-      { id: 2, msg: "Kida", type: "sent" },
-      { id: 4, msg: "Mai b vadiya", type: "recieved" }
-    ]
-  },
-
-]
 export default function MessagesScreen({ route, navigation }) {
   const [msg, setMsg] = useState([]);
   const [message, setMessage] = useState("")
   const { selecteduser, id } = route.params;
   // access global context here 
-  const { joinChat } = useContext(GlobalContext);
+  // console.log(selecteduser)
+  const { 
+    joinChat, 
+    userChats, 
+    sendPrivateMessage, 
+    user,
+    recevePrivateMessage,
+    saveChats,
+    updateChats
+   } = useContext(GlobalContext);
+   
   useEffect(() => {
     joinChat(selecteduser, id);
   }, [])
+
   useEffect(() => {
-    const filterdData = dummyChats.find(c => c.id === id);
-    setMsg(filterdData.messages)
-  }, [])
+    if(userChats.length > 0 ) {
+      const filterdData = userChats.find(c => c.selected_user_id === id);
+      if(filterdData && filterdData?.userMessages) {
+        setMsg(filterdData?.userMessages)
+      }
+    }
+  }, [msg])
+
+  useEffect(() => {
+    recevePrivateMessage()
+  }, [message])
 
   async function sendSms() {
     if (message === "") return Alert.alert("Enter text to send");
     const newMsg = { id: msg.length + 1, msg: message, type: "sent" };
     setMsg(prevMsg => [...prevMsg, newMsg]);
+    const filterdData = userChats.find(c => c.selected_user_id === id);
+
+    if(!filterdData) {
+      await saveChats(false, id, newMsg, selecteduser);
+    } else {
+      await updateChats(msg[0].msg);
+    }
+
+    sendPrivateMessage(
+      user.username,
+      selecteduser,
+      id,
+      message
+    );
     setMessage("");
     Keyboard.dismiss();
   }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -65,11 +80,11 @@ export default function MessagesScreen({ route, navigation }) {
       </View>
       <View style={styles.chatarea}>
         {/* recieved chats are matched here  */}
-        {msg.map((rc, index) => (
+        { msg.map((rc, index) => (
           <View style={
             rc.type === "sent" ? styles.chatsent : styles.chatreceived
-          } key={rc.id}>
-            <Text style={styles.recievedText}>{rc.msg}</Text>
+          } key={index}>
+            <Text style={styles.recievedText}>{rc["msg"]}</Text>
           </View>
         ))}
 

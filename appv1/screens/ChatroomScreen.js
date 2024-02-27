@@ -3,33 +3,21 @@ import { useContext, useEffect } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GlobalContext } from '../context';
 import SearchBar from '../Components/SearchBar';
-const dummy = [
-  {
-    name: "Abhishek",
-    latestMsg: "Hi broo...",
-    isSeen: false,
-    id: 1,
-    imageSource: "https://img.freepik.com/free-photo/3d-render-little-boy-with-eyeglasses-blue-shirt_1142-50994.jpg?t=st=1708664899~exp=1708668499~hmac=cabf177acbebe07016de6be90598c7654dd34095cf8f91a50bb115080edbae6a&w=740"
-  },
-  {
-    name: "Anku",
-    latestMsg: "Mai gadda hun.",
-    isSeen: true,
-    id: 2,
-    imageSource: "https://img.freepik.com/free-photo/3d-cartoon-style-character_23-2151034097.jpg?t=st=1708664940~exp=1708668540~hmac=d782110d146ca6125a2dc882857829d7e344b6f88ab19e39c84d71e160694bb2&w=740"
-  }
-]
+
 export default function ChatroomScreen({ route, navigation }) {
   const { username } = route.params;
   const {
     connectSocket,
-    joinChat
+    userChats,
+    fetchChats
   } = useContext(GlobalContext);
 
   useEffect(() =>{
     //  connecting all sockets
-     connectSocket()
-  }, []);
+    fetchChats();
+    connectSocket()
+  }, [userChats?.length]);
+  console.log(userChats.length, "in chat room")
 
   return (
     <View style={styles.container}>
@@ -39,21 +27,22 @@ export default function ChatroomScreen({ route, navigation }) {
       </View>
       <View style={styles.searchArea}>
         {/* search bar area for text... */}
-        <SearchBar navigate={navigation.navigate} />
+        <SearchBar  />
       </View>
       <View style={styles.chatListContainer}>
-        {dummy.map(u => (
+        {userChats.length > 0 && userChats.map(u => (
+          
           <Pressable 
           onPress={() => {
             navigation.navigate("Messages", {
               selecteduser: u.name, 
-              id: u.id              
+              id: u.selected_user_id              
             })
           }}
-          key={u.id} 
+          key={u._id} 
           style={styles.chartCard}>
             <View style={styles.imageSection}>
-              <Image style={styles.image} source={{ uri: u.imageSource }} />
+              <Image style={styles.image} source={{ uri: u.userImage }} />
             </View>
             <View style={styles.userTextContainer}>
               <Text style={styles.userName}>{u.name}</Text>

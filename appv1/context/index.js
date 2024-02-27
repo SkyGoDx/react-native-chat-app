@@ -1,6 +1,6 @@
 import { createContext, useReducer, useState } from 'react'
-import { IS_LOADING, LOGIN_USER, LOGOUT_USER, SET_SOCKET, SET_USER } from './actions';
-import { postRequest } from '../useApihook';
+import { IS_LOADING, LOGIN_USER, SET_SEARCHED_USER, SET_CHATS, SET_SOCKET, SET_USER, SET_RECIEVED_CHATS } from './actions';
+import { getRequest, postRequest, putRequest } from '../useApihook';
 import { validateForm } from '../utils/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import io from "socket.io-client"
@@ -24,7 +24,7 @@ const initialState = {
     },
     // loading: false,
     socketIo: null,
-    searchedUser: {}
+    userChats: []
 }
 const myreducer = (state, { type, payload }) => {
     switch (type) {
@@ -46,7 +46,26 @@ const myreducer = (state, { type, payload }) => {
             return {
                 ...state,
                 selectedUser: payload
-            }
+            };
+        case SET_CHATS:
+            return {
+                ...state,
+                userChats: payload
+            };
+        case SET_RECIEVED_CHATS:
+            return {
+                ...state,
+                userChats: [
+                    ...state.userChats, // Copy existing chats
+                    {   // Add the new message to userMessages array
+                        ...state.userChats[state.userChats.length - 1], // copy last chat
+                        userMessages: [
+                            ...(state.userChats[state.userChats.length - 1]?.userMessages || []), // copy existing messages if any
+                            payload // add the new message
+                        ]
+                    }
+                ]
+            };
     }
 }
 function Globalstate({ children }) {
@@ -75,22 +94,25 @@ function Globalstate({ children }) {
         return socketIo.emit("joinRoom", { user_id, selectedUser, from: state.user.username})
     }
     // sending private messages
-    function sendPrivateMessage(from, to, user_id, content) {
+    function sendPrivateMessage(from, touser, user_id, content) {
         const { socketIo } = state;
         console.log("sending private messages to user")
         return socketIo.emit("sendMessage", {
             from,
-            to, 
+            touser, 
             user_id,
             content
         });
     }
     // recieving private messages
     function recevePrivateMessage() {
-        console.log("recieving messages ->");
         const { socketIo } = state;
         socketIo.on("newMessage", (content) => {
-            console.log("receeved new content...", content);
+            console.log("receeved new content...", JSON.stringify(content, null, 2));
+            dispatch({
+                type: SET_RECIEVED_CHATS,
+                payload: { msg: content.msg, type: "received" }
+            })
         })
     }
     function setshowLoginView(isTrue) {
@@ -153,8 +175,49 @@ function Globalstate({ children }) {
         } else {
             return alert(data?.msg || "Your request failed...");
         }
+    };
+    async function saveChats(
+        isSeen, selected_user_id, newMessage, name
+    ) {
+        // if(state.userChats.length <= 0) return null;
+        console.log("saving data ")
+        const [e1, data] = await postRequest("chats/add", {
+            ...state.userChats,
+            login_id: state.user.user_id,
+            latestMsg: newMessage.msg,
+            isSeen: isSeen,
+            name,
+            selected_user_id: selected_user_id,
+            userImage: "https://img.freepik.com/free-photo/3d-cartoon-style-character_23-2151034097.jpg?t=st=1708664940~exp=1708668540~hmac=d782110d146ca6125a2dc882857829d7e344b6f88ab19e39c84d71e160694bb2&w=740",
+            userMessages : [
+                newMessage
+            ]
+        });
+        if(e1) return alert("failed to save chats...");
+        if(data.result >= 1) {
+            return "success"
+        }
     }
-    console.log(state.searchedUser)
+    async function updateChats (msg) {
+        const [e1, data] = await putRequest(`chats/${state.user.user_id}`, {
+            userMessages: {
+                msg,
+                type: "sent"
+            }
+        });
+        if(e1) return alert(e1);
+        return true;
+    }
+    async function fetchChats() {
+        const [e1, data] = await getRequest(`chats/${state?.user.user_id}`);
+        if(e1) return alert(e1);
+        console.log(data)
+        return dispatch({
+            type: SET_CHATS,
+            payload: data.result === 0 ? [] : data?.userChats
+        })
+    };
+    // console.log(state)
     return <GlobalContext.Provider
         value={{
             ...state,
@@ -172,7 +235,9 @@ function Globalstate({ children }) {
             joinChat,
             sendPrivateMessage,
             recevePrivateMessage,
-            dispatch
+            saveChats,
+            fetchChats,
+            updateChats
         }}>
         {children}
     </GlobalContext.Provider>

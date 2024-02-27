@@ -8,6 +8,7 @@ import { userRouter } from './router/userRouter/user.index';
 import dotenv from "dotenv";
 import Io from "./webSockets";
 import http from "http"
+import { chatRouter } from "./router/chats/chats.router";
 dotenv.config();
 
 const app: Application = express();
@@ -31,6 +32,7 @@ mongoose.connect(
 
 // api routes
 app.use("/api/user", userRouter);
+app.use("/api/chats", chatRouter);
 
 
 if (process.env.ENV === "DEVELOPMENT") {

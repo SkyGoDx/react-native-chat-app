@@ -1,24 +1,27 @@
+import { useNavigation } from '@react-navigation/native';
 import React from 'react'
 import {
     View,
     StyleSheet,
     Text,
     Image,
-    TouchableHighlight
+    TouchableHighlight,
+    Pressable
 } from 'react-native'
 let imageUrl = "https://img.freepik.com/free-photo/3d-render-little-boy-with-eyeglasses-blue-shirt_1142-50994.jpg?t=st=1708664899~exp=1708668499~hmac=cabf177acbebe07016de6be90598c7654dd34095cf8f91a50bb115080edbae6a&w=740";
 
-const SearchResults = ({ results, navigate }) => {
+const SearchResults = ({ results }) => {
+    const { navigate } = useNavigation();
 
     return (
         <>
             {results.map(item => (
-                <TouchableHighlight
+                <Pressable
                 onPress={() => {
-                    navigate("Messages"), {
+                    navigate("Messages", {
                         selecteduser: item.username,
                         id: item.user_id
-                    }
+                    })
                 }}
                 key={item._id}
                 style={styles.searchCard}>
@@ -27,7 +30,7 @@ const SearchResults = ({ results, navigate }) => {
                     source={{ uri: item.imageUrl || imageUrl}}
                     />
                     <Text style={styles.username}>{item.username}</Text>
-                </TouchableHighlight>
+                </Pressable>
             ))}
         </>
     )

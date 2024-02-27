@@ -1,10 +1,10 @@
-import mongoose, { Mongoose } from "mongoose";
 import { UserModel } from "../../models/User";
 
 interface UserObj {
   _id: string;
   username: string;
   password: string;
+  name: string;
 }
 
 type CreateNewUser = (username: string, password: string) => Promise<boolean>;
@@ -19,6 +19,7 @@ const createNewUser: CreateNewUser = async (username, password) => {
     const newUser = new UserModel({
       username: username,
       password: password,
+      name: username,
     });
     await newUser.save();
     return true;
@@ -27,9 +28,7 @@ const createNewUser: CreateNewUser = async (username, password) => {
   }
 };
 const findExistingUser: FindExisting = async (username, password) => {
-
-    return await UserModel.findOne({ username, password });
-
+  return await UserModel.findOne({ username, password });
 };
 const getUserByUsername: GetByUserName = async (username) => {
   console.log(username);

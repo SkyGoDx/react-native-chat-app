@@ -16,7 +16,19 @@ async function postRequest(action, body) {
         return [e]
     }
 }
-
+async function putRequest(action, body) {
+    try {
+        const resp = await axios.put(
+            `${API_URL}${action}`,
+            body
+        );
+        const data = await resp.data;
+        return [null, data];
+    } catch (e) {
+        console.log(JSON.stringify(e, null, 3))
+        return [e]
+    }
+}
 async function getRequest(action, query) {
     try {
         const resp = await axios.get(
@@ -31,4 +43,4 @@ async function getRequest(action, query) {
 }
 
 
-export { postRequest, getRequest }
+export { postRequest, getRequest, putRequest }
